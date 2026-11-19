@@ -81,31 +81,28 @@ beforeAll(async () => {
   )
 })
 
-test.failing(
-  "USB1046 preserves the converter's six top paste apertures without bottom duplicates",
-  () => {
-    const paste = circuit.db.pcb_solder_paste.list()
-    expect(paste).toHaveLength(6)
-    expect(
-      paste.filter((aperture) => aperture.layer === "bottom"),
-    ).toHaveLength(0)
-    for (const aperture of input.filter(
-      (element) => element.type === "pcb_solder_paste",
-    )) {
-      expect(aperture.shape).toBe("pill")
-      if (aperture.shape !== "pill")
-        throw new Error("Expected rounded stencil openings")
-      expect(paste).toContainEqual(
-        expect.objectContaining({
-          shape: "pill",
-          x: aperture.x,
-          y: aperture.y,
-          width: aperture.width,
-          height: aperture.height,
-          radius: aperture.radius,
-          layer: "top",
-        }),
-      )
-    }
-  },
-)
+test("USB1046 preserves the converter's six top paste apertures without bottom duplicates", () => {
+  const paste = circuit.db.pcb_solder_paste.list()
+  expect(paste).toHaveLength(6)
+  expect(paste.filter((aperture) => aperture.layer === "bottom")).toHaveLength(
+    0,
+  )
+  for (const aperture of input.filter(
+    (element) => element.type === "pcb_solder_paste",
+  )) {
+    expect(aperture.shape).toBe("pill")
+    if (aperture.shape !== "pill")
+      throw new Error("Expected rounded stencil openings")
+    expect(paste).toContainEqual(
+      expect.objectContaining({
+        shape: "pill",
+        x: aperture.x,
+        y: aperture.y,
+        width: aperture.width,
+        height: aperture.height,
+        radius: aperture.radius,
+        layer: "top",
+      }),
+    )
+  }
+})
