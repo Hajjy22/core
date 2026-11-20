@@ -168,6 +168,10 @@ export const createComponentsFromCircuitJson = (
     }
   }
   const components: PrimitiveComponent[] = []
+  const addImportedSmtPad = (record: PcbSmtPad, pad: SmtPad) => {
+    components.push(pad)
+    importedSmtPads.set(record.pcb_smtpad_id, pad)
+  }
   const schematicSymbolsByImportedId = new Map<string, SymbolComponent>()
   const schematicComponentsByImportedId = new Map<string, SchematicComponent>()
   const sourceComponentIdByPcbComponentId = new Map<string, string>()
@@ -302,7 +306,6 @@ export const createComponentsFromCircuitJson = (
   }
 
   for (const elm of circuitJson) {
-    const previousComponentCount = components.length
     let resolvedPortHints: string[] | undefined
     if ("port_hints" in elm) {
       resolvedPortHints = elm.port_hints
@@ -371,7 +374,8 @@ export const createComponentsFromCircuitJson = (
       }
       components.push(new PcbSoldermaskOpening(openingProps))
     } else if (elm.type === "pcb_smtpad" && elm.shape === "rect") {
-      components.push(
+      addImportedSmtPad(
+        elm,
         new SmtPad({
           pcbX: elm.x,
           pcbY: elm.y,
@@ -387,7 +391,8 @@ export const createComponentsFromCircuitJson = (
         }),
       )
     } else if (elm.type === "pcb_smtpad" && elm.shape === "circle") {
-      components.push(
+      addImportedSmtPad(
+        elm,
         new SmtPad({
           pcbX: elm.x,
           pcbY: elm.y,
@@ -401,7 +406,8 @@ export const createComponentsFromCircuitJson = (
         }),
       )
     } else if (elm.type === "pcb_smtpad" && elm.shape === "pill") {
-      components.push(
+      addImportedSmtPad(
+        elm,
         new SmtPad({
           shape: "pill",
           height: elm.height,
@@ -417,7 +423,8 @@ export const createComponentsFromCircuitJson = (
         }),
       )
     } else if (elm.type === "pcb_smtpad" && elm.shape === "rotated_pill") {
-      components.push(
+      addImportedSmtPad(
+        elm,
         new SmtPad({
           shape: "rotated_pill",
           height: elm.height,
@@ -449,7 +456,7 @@ export const createComponentsFromCircuitJson = (
         solderMaskMargin: elm.soldermask_margin,
       })
       smtpad._importedRectBorderRadius = elm.rect_border_radius
-      components.push(smtpad)
+      addImportedSmtPad(elm, smtpad)
     } else if (elm.type === "pcb_smtpad" && elm.shape === "polygon") {
       const smtpad = new SmtPad({
         shape: "polygon",
@@ -468,7 +475,7 @@ export const createComponentsFromCircuitJson = (
       if (preserveAuthoredSolderPaste || polygonPaste.length > 0) {
         smtpad._inflatedPcbSolderPaste = polygonPaste
       }
-      components.push(smtpad)
+      addImportedSmtPad(elm, smtpad)
     } else if (elm.type === "pcb_silkscreen_path") {
       components.push(
         new SilkscreenPath({
@@ -1121,14 +1128,6 @@ export const createComponentsFromCircuitJson = (
           }),
         )
       }
-    }
-    if (
-      elm.type === "pcb_smtpad" &&
-      components.length > previousComponentCount
-    ) {
-      const smtPad = components.at(-1)
-      if (smtPad instanceof SmtPad)
-        importedSmtPads.set(elm.pcb_smtpad_id, smtPad)
     }
   }
   for (const aperture of circuitJson) {
